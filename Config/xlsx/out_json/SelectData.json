@@ -1,0 +1,36 @@
+{
+	"@Tool": "github.com/davyxu/tabtoy",
+	"@Version": "3.1.4",
+	"SelectData": [
+		{
+			"Goto": 104,
+			"ID": 1001,
+			"Text": "很好"
+		},
+		{
+			"Goto": 103,
+			"ID": 1002,
+			"Text": "不太好"
+		},
+		{
+			"Goto": 107,
+			"ID": 1003,
+			"Text": "我不想说"
+		},
+		{
+			"Goto": 108,
+			"ID": 1004,
+			"Text": "小黑生病了"
+		},
+		{
+			"Goto": 107,
+			"ID": 1005,
+			"Text": "我没空"
+		},
+		{
+			"Goto": 106,
+			"ID": 1006,
+			"Text": "可以啊"
+		}
+	]
+}
