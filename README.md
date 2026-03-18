@@ -198,24 +198,11 @@ Config\xlsx\Make.bat
 - 导出 JSON 到 `Assets/Resources/LoadableAssets/Table`
 - 重建 `tablelist.json`
 
-## 数据校验
-
-[DialogueValidator.cs](/d:/unitycode2/Dialogue/Assets/Scripts/Dialogue/DialogueValidator.cs) 会在初始化时校验以下内容：
-
-- 对话 ID 是否重复
-- 选项 ID 是否重复
-- `NextID` 是否指向不存在的节点
-- `SelectList` 中的选项是否存在
-- `Goto` 是否指向不存在的对话节点
-
-如果校验失败，Unity Console 会输出错误，并停止后续初始化。
-
 ## 当前实现说明
 
 基于当前代码，这个项目已经实现了对话主流程，但还有一些地方是保留扩展位：
 
 - `DialogueData.Name` 已经存在，但当前 UI 里还没有显示说话人名字
-- `DialogueUI` 中虽然有 `bg`、`inputImg`、`characterImg` 字段，但现在还没有和表数据联动
 - 当节点既没有 `NextID` 也没有选项时，系统会自动隐藏对话 UI，作为结束处理
 - UI 预制体路径目前写死为 `Resources/Perfab/DialogueUI`
 
