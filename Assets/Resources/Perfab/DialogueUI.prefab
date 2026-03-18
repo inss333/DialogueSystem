@@ -766,6 +766,7 @@ MonoBehaviour:
   choice2: {fileID: 7848735914367995822}
   text2: {fileID: 9147676156703506945}
   diaText: {fileID: 6984337857306539418}
+  charactersPerSecond: 15
 --- !u!1 &4915033034178881011
 GameObject:
   m_ObjectHideFlags: 0

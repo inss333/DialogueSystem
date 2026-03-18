@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
@@ -19,12 +20,16 @@ namespace D1
         [SerializeField] private TextMeshProUGUI text2;
 
         [SerializeField] private TextMeshProUGUI diaText;
+        [SerializeField] private float charactersPerSecond = 15f;
 
-        private readonly List<Button> _choiceButtons = new List<Button>();
-        private readonly List<TextMeshProUGUI> _choiceTexts = new List<TextMeshProUGUI>();
-        private readonly List<int> _choiceTargets = new List<int>();
+        private readonly List<Button> _choiceButtons = new ();
+        private readonly List<TextMeshProUGUI> _choiceTexts = new ();
+        private readonly List<int> _choiceTargets = new ();
         private bool _isInitialized;
         private bool _allowBackgroundNext;
+        private bool _isTyping;
+        private Coroutine _typingCoroutine;
+        private DialogueResult _currentResult;
 
         public event Action OnClickNextEvent;
         public event Action<int> OnClickChoiceEvent;
@@ -56,6 +61,7 @@ namespace D1
             _choiceButtons.Clear();
             _choiceTexts.Clear();
             _choiceTargets.Clear();
+            StopTyping();
             _isInitialized = false;
         }
 
@@ -66,13 +72,23 @@ namespace D1
                 return;
             }
 
-            _allowBackgroundNext = result.Options.Count == 0;
-            diaText.text = result.Node.Text;
-            UpdateSelectButtons(result.Options);
+            _currentResult = result;
+            StopTyping();
+            _allowBackgroundNext = false;
+            diaText.text = result.Node.Text ?? string.Empty;
+            diaText.maxVisibleCharacters = 0;
+            UpdateSelectButtons(Array.Empty<SelectData>());
+            _typingCoroutine = StartCoroutine(TypeDialogueText());
         }
 
         public void OnClickNext()
         {
+            if (_isTyping)
+            {
+                CompleteTyping();
+                return;
+            }
+
             if (!_allowBackgroundNext)
             {
                 return;
@@ -141,12 +157,94 @@ namespace D1
 
         private void OnChoice(int index)
         {
+            if (_isTyping)
+            {
+                CompleteTyping();
+                return;
+            }
+
             if (index < 0 || index >= _choiceTargets.Count)
             {
                 return;
             }
 
             OnClickChoiceEvent?.Invoke(_choiceTargets[index]);
+        }
+
+        private IEnumerator TypeDialogueText()
+        {
+            _isTyping = true;
+            diaText.ForceMeshUpdate();
+            var totalCharacters = diaText.textInfo.characterCount;
+            if (totalCharacters <= 0)
+            {
+                FinishTyping();
+                yield break;
+            }
+
+            var visibleCharacters = 0;
+            var interval = charactersPerSecond > 0f ? 1f / charactersPerSecond : 0f;
+            var elapsed = 0f;
+
+            while (visibleCharacters < totalCharacters)
+            {
+                if (interval <= 0f)
+                {
+                    visibleCharacters = totalCharacters;
+                }
+                else
+                {
+                    elapsed += Time.deltaTime;
+                    var targetVisibleCharacters = Mathf.FloorToInt(elapsed / interval);
+                    if (targetVisibleCharacters <= visibleCharacters)
+                    {
+                        yield return null;
+                        continue;
+                    }
+
+                    visibleCharacters = Mathf.Min(targetVisibleCharacters, totalCharacters);
+                }
+
+                diaText.maxVisibleCharacters = visibleCharacters;
+                yield return null;
+            }
+
+            FinishTyping();
+        }
+
+        private void CompleteTyping()
+        {
+            if (_currentResult?.Node == null)
+            {
+                return;
+            }
+
+            StopTyping();
+            diaText.ForceMeshUpdate();
+            diaText.maxVisibleCharacters = diaText.textInfo.characterCount;
+            FinishTyping();
+        }
+
+        private void FinishTyping()
+        {
+            _isTyping = false;
+            _typingCoroutine = null;
+
+            var options = _currentResult?.Options;
+            UpdateSelectButtons(options ?? Array.Empty<SelectData>());
+            _allowBackgroundNext = options == null || options.Count == 0;
+        }
+
+        private void StopTyping()
+        {
+            _isTyping = false;
+            if (_typingCoroutine == null)
+            {
+                return;
+            }
+
+            StopCoroutine(_typingCoroutine);
+            _typingCoroutine = null;
         }
     }
 }
