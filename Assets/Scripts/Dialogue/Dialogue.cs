@@ -83,7 +83,13 @@ namespace D1
         private DialogueResult BuildResult(DialogueData dialogueData)
         {
             var options = _repository.GetSelectDataList(dialogueData);
-            return new DialogueResult(dialogueData, options);
+            CharacterData character = null;
+            if (dialogueData != null && dialogueData.CharacterID != 0)
+            {
+                _repository.TryGetCharacterData(dialogueData.CharacterID, out character);
+            }
+
+            return new DialogueResult(dialogueData, character, options);
         }
     }
 }

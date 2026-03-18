@@ -24,6 +24,16 @@ namespace D1
 		public string Text = string.Empty;
 		public List<Int32> SelectList = new List<Int32>();
 		public Int32 NextID = 0;
+		public Int32 CharacterID = 0;
+		
+		
+	}
+	
+[System.Serializable]
+	public partial class CharacterData
+	{ 
+		public Int32 ID = 0;
+		public string ImagePath = string.Empty;
 		
 		
 	}
@@ -33,12 +43,15 @@ namespace D1
 [System.Serializable]
 	public partial class Table
 	{ 
+		// table: CharacterData
+		public List<CharacterData> CharacterData = new List<CharacterData>(); 
 		// table: DialogueData
 		public List<DialogueData> DialogueData = new List<DialogueData>(); 
 		// table: SelectData
 		public List<SelectData> SelectData = new List<SelectData>(); 
 
 		// Indices
+		public Dictionary<Int32,CharacterData> CharacterDataByID = new Dictionary<Int32,CharacterData>();
 		public Dictionary<Int32,DialogueData> DialogueDataByID = new Dictionary<Int32,DialogueData>();
 		public Dictionary<Int32,SelectData> SelectDataByID = new Dictionary<Int32,SelectData>();
 		
@@ -47,8 +60,10 @@ namespace D1
 
 		public void ResetData( )
 		{   
+			CharacterData.Clear(); 
 			DialogueData.Clear(); 
 			SelectData.Clear();  
+			CharacterDataByID.Clear();
 			DialogueDataByID.Clear();
 			SelectDataByID.Clear();
 				

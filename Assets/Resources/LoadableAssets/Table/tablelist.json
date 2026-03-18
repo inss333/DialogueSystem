@@ -1,5 +1,6 @@
 ﻿{
     "Tables":  [
+                   "CharacterData.json",
                    "DialogueData.json",
                    "SelectData.json"
                ]

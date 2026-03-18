@@ -20,12 +20,6 @@ namespace D1
             }
 
             _repository = new DialogueRepository();
-            if (!DialogueValidator.Validate(_repository))
-            {
-                Debug.LogError("Dialogue validation failed.");
-                return null;
-            }
-
             _dialogue = new Dialogue(_repository);
 
             var prefab = Resources.Load<GameObject>(DialoguePrefabPath);

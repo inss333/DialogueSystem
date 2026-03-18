@@ -25,6 +25,7 @@ namespace D1
         private readonly List<Button> _choiceButtons = new ();
         private readonly List<TextMeshProUGUI> _choiceTexts = new ();
         private readonly List<int> _choiceTargets = new ();
+        private readonly Dictionary<string, Sprite> _portraitCache = new ();
         private bool _isInitialized;
         private bool _allowBackgroundNext;
         private bool _isTyping;
@@ -77,6 +78,7 @@ namespace D1
             _allowBackgroundNext = false;
             diaText.text = result.Node.Text ?? string.Empty;
             diaText.maxVisibleCharacters = 0;
+            RefreshPortrait(result.Character);
             UpdateSelectButtons(Array.Empty<SelectData>());
             _typingCoroutine = StartCoroutine(TypeDialogueText());
         }
@@ -245,6 +247,41 @@ namespace D1
 
             StopCoroutine(_typingCoroutine);
             _typingCoroutine = null;
+        }
+
+        private void RefreshPortrait(CharacterData character)
+        {
+            if (!characterImg)
+            {
+                return;
+            }
+
+            var portrait = LoadPortrait(character?.ImagePath);
+            characterImg.sprite = portrait;
+            characterImg.enabled = portrait != null;
+        }
+
+        private Sprite LoadPortrait(string imagePath)
+        {
+            if (string.IsNullOrWhiteSpace(imagePath))
+            {
+                return null;
+            }
+
+            if (_portraitCache.TryGetValue(imagePath, out var sprite))
+            {
+                return sprite;
+            }
+
+            sprite = Resources.Load<Sprite>(imagePath);
+            if (sprite == null)
+            {
+                Debug.LogWarning($"Dialogue portrait load failed: {imagePath}");
+                return null;
+            }
+
+            _portraitCache[imagePath] = sprite;
+            return sprite;
         }
     }
 }

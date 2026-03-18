@@ -3,6 +3,7 @@
 	"@Version": "3.1.4",
 	"DialogueData": [
 		{
+			"CharacterID": 1,
 			"ID": 101,
 			"Name": "小白",
 			"NextID": 102,
@@ -10,6 +11,7 @@
 			"Text": "你好啊"
 		},
 		{
+			"CharacterID": 1,
 			"ID": 102,
 			"Name": "小白",
 			"NextID": 0,
@@ -20,6 +22,7 @@
 			"Text": "最近还好吗"
 		},
 		{
+			"CharacterID": 1,
 			"ID": 103,
 			"Name": "小白",
 			"NextID": 0,
@@ -30,6 +33,7 @@
 			"Text": "发生什么事了"
 		},
 		{
+			"CharacterID": 1,
 			"ID": 104,
 			"Name": "小白",
 			"NextID": 105,
@@ -37,6 +41,7 @@
 			"Text": "这么高兴呀"
 		},
 		{
+			"CharacterID": 1,
 			"ID": 105,
 			"Name": "小白",
 			"NextID": 0,
@@ -48,6 +53,7 @@
 			"Text": "我这里有件事情，可以找你帮下忙吗"
 		},
 		{
+			"CharacterID": 1,
 			"ID": 106,
 			"Name": "小白",
 			"NextID": 0,
@@ -55,6 +61,7 @@
 			"Text": "谢谢你"
 		},
 		{
+			"CharacterID": 1,
 			"ID": 107,
 			"Name": "小白",
 			"NextID": 0,
@@ -62,11 +69,20 @@
 			"Text": "这样啊，那就不麻烦你了"
 		},
 		{
+			"CharacterID": 1,
 			"ID": 108,
 			"Name": "小白",
-			"NextID": 0,
+			"NextID": 109,
 			"SelectList": [],
 			"Text": "有空我去看看他"
+		},
+		{
+			"CharacterID": 2,
+			"ID": 109,
+			"Name": "小黑",
+			"NextID": 0,
+			"SelectList": [],
+			"Text": "好"
 		}
 	]
 }

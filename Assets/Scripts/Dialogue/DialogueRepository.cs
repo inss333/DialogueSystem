@@ -14,6 +14,11 @@ namespace D1
             return Table.Instance.SelectDataByID.TryGetValue(selectID, out data);
         }
 
+        public bool TryGetCharacterData(int characterID, out CharacterData data)
+        {
+            return Table.Instance.CharacterDataByID.TryGetValue(characterID, out data);
+        }
+
         public List<SelectData> GetSelectDataList(DialogueData dialogueData)
         {
             var result = new List<SelectData>();
