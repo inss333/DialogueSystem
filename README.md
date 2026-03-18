@@ -1,230 +1,234 @@
 # DialogueSystem
 
-一个基于 Unity 的轻量级对话系统示例项目。
+基于 Unity 的轻量对话系统示例。当前工程已经把“通用表系统”和“对话模块”拆开：
 
-这个项目使用 `DialogueData` 和 `SelectData` 两张表来描述对话节点、分支选择和跳转关系，运行时通过 `Resources` 加载 JSON 数据，并使用统一的 `DialogueUI` 预制体进行渲染，适合用来快速搭建剧情对话、NPC 对话或简单的分支叙事系统。
+- `tabtoy` 导表和二进制表加载属于项目级基础设施
+- `Dialogue` 只是使用这套表系统的一个业务模块
 
-## 项目特性
-
-- 基于配置表驱动对话内容
-- 支持顺序对话，使用 `NextID` 串联节点
-- 支持分支选项，使用 `SelectList` 跳转不同节点
-- 支持打字机效果
-- 启动时自动校验表数据引用关系
-- 选项按钮支持按数量动态扩展
-- 自带可运行示例场景
-
-## 运行环境
+## 环境
 
 - Unity `2022.3.62f1c1`
 - UI: `UGUI`
 - 文本组件: `TextMeshPro`
-- 表工具: `tabtoy`
+- 导表工具: `tabtoy`
 
-## 目录结构
+## 当前结构
 
 ```text
 Assets/
   Resources/
-    LoadableAssets/Table/      # 导出的 JSON 配置表
-    Perfab/DialogueUI.prefab   # 对话 UI 预制体
+    LoadableAssets/Table/                # 导表产物（.bytes + tablelist.json）
+    Perfab/DialogueUI.prefab             # 对话 UI 预制体
   Scripts/
-    Dialogue/
-      Dialogue.cs
-      DialogueController.cs
-      DialogueRepository.cs
-      DialogueResult.cs
-      DialogueUI.cs
-      DialogueValidator.cs
-    Generated/
-      table_gen.cs             # 自动生成的表结构代码
-    Main.cs                    # 示例入口
-    TableDataMgr.cs            # 表加载与索引构建
-  Scenes/
-    SampleScene.unity
+    Core/
+      Localization/
+        LocalizationLanguage.cs          # 支持的语言枚举
+        LocalizationLanguageExtensions.cs # 语言显示名和语言列映射
+        LocalizationRepository.cs        # 本地化查询入口，按 Key + 当前语言返回文本或语音路径
+        LocalizationSettings.cs          # 当前语言设置
+      Table/
+        TableDataMgr.cs                  # 表加载入口，读取 bytes 并调用 Deserialize/IndexData
+        Table.Extensions.cs              # Table 的业务级 Normalize 逻辑
+        Generated/
+          table_gen.cs                   # tabtoy 生成的表结构、反序列化和索引代码
+        Runtime/
+          TableReader.cs                 # tabtoy 二进制读表运行时
+    Modules/
+      Dialogue/
+        Dialogue.cs                      # 对话流程状态机，负责开始/下一句/选项跳转
+        DialogueController.cs            # 对话系统入口，协调 UI、语言切换和语音播放
+        DialogueRepository.cs            # 原始表查询层，只取 Dialogue/Select/Character 数据
+        DialogueResolver.cs              # 结果组装层，把表数据解析成最终展示结果
+        DialogueResult.cs                # 对话节点结果和选项结果结构
+        DialogueUI.cs                    # 对话界面表现层，负责文本、头像、选项、下拉框、打字机
+        DialogueVoicePlayer.cs           # 语音播放组件，负责 AudioSource 和 AudioClip 缓存
+    Main.cs                              # 示例启动入口
 
 Config/
-  xlsx/
-    Dialogue.xlsx
-    Select.xlsx
-    Index.xlsx
-    Make.bat                   # 导表脚本
+  Table/
+    xlsx/                                # 通用配表目录
+      *.xlsx
+      Make.bat                           # 导表入口脚本
+    tabtoy.exe                           # 预编译 tabtoy，可被 Make.bat 直接调用
 ```
 
-## 核心流程
-
-### 1. 表数据加载
-
-启动时先调用 `TableDataMgr.Init()`，它会读取：
-
-- `Assets/Resources/LoadableAssets/Table/tablelist.json`
-- `Assets/Resources/LoadableAssets/Table/DialogueData.json`
-- `Assets/Resources/LoadableAssets/Table/SelectData.json`
-
-加载完成后，会自动构建以下字典索引，方便运行时快速查找：
-
-- `DialogueDataByID`
-- `SelectDataByID`
-
-## 2. 对话运行逻辑
-
-运行时状态由 [Dialogue.cs](/d:/unitycode2/Dialogue/Assets/Scripts/Dialogue/Dialogue.cs) 管理，主要接口包括：
-
-- `StartDialogue(int dialogueID)`：开始对话
-- `NextDialogue()`：跳转到下一个顺序节点
-- `ChoiceDialogue(int dialogueID)`：跳转到选择分支目标节点
-- `EndDialogue()`：结束当前对话
-
-每次切换节点后，系统都会生成一个 `DialogueResult`，其中包含：
-
-- 当前节点数据
-- 当前节点可选项列表
-- 当前节点是否还能继续
-- 当前节点是否已经结束
-
-## 3. UI 控制流程
-
-[DialogueController.cs](/d:/unitycode2/Dialogue/Assets/Scripts/Dialogue/DialogueController.cs) 负责：
-
-- 初始化数据仓库
-- 执行对话表校验
-- 从 `Resources/Perfab/DialogueUI` 加载 UI 预制体
-- 绑定下一句事件和选项点击事件
-- 把当前节点渲染到界面上
-
-[DialogueUI.cs](/d:/unitycode2/Dialogue/Assets/Scripts/Dialogue/DialogueUI.cs) 负责：
-
-- 显示当前对话文本
-- 根据选项数量显示或隐藏按钮
-- 当选项数量超过初始模板数量时，自动克隆按钮
-
-## 数据表结构
+## 表设计
 
 ### DialogueData
+
+只保存对话逻辑和引用。
 
 | 字段 | 类型 | 说明 |
 | --- | --- | --- |
 | `ID` | `int` | 对话节点 ID |
-| `Name` | `string` | 说话人名称 |
-| `Text` | `string` | 对话内容 |
-| `SelectList` | `List<int>` | 当前节点关联的选项 ID 列表 |
-| `NextID` | `int` | 下一个顺序节点 ID，`0` 表示没有后续节点 |
+| `SelectList` | `List<int>` | 选项 ID 列表 |
+| `NextID` | `int` | 顺序下一节点，`0` 表示没有后续 |
+| `SpeakerID` | `int` | 说话人角色 ID |
+| `TextKey` | `string` | 正文本地化 Key |
+| `VoiceKey` | `string` | 语音本地化 Key |
 
 ### SelectData
 
 | 字段 | 类型 | 说明 |
 | --- | --- | --- |
 | `ID` | `int` | 选项 ID |
-| `Text` | `string` | 选项文本 |
-| `Goto` | `int` | 选择后跳转到的目标对话节点 ID |
+| `Goto` | `int` | 选择后跳转节点 |
+| `TextKey` | `string` | 选项文本 Key |
 
-## 示例入口
+### CharacterData
 
-当前示例启动逻辑位于 [Main.cs](/d:/unitycode2/Dialogue/Assets/Scripts/Main.cs)：
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `ID` | `int` | 角色 ID |
+| `ImagePath` | `string` | 头像资源路径，填 `Resources` 相对路径且不带扩展名 |
+| `NameKey` | `string` | 角色名 Key |
 
-```csharp
-if (!TableDataMgr.Init())
-{
-    return;
-}
+### LocalizationData
 
-var controller = gameObject.AddComponent<DialogueController>().Init();
-if (!controller)
-{
-    Debug.LogError("DialogueController init failed.");
-    return;
-}
+文本和语音统一放在一张表里，运行时通过 `Key` 查询。
 
-controller.RenderNode(101);
-```
-
-这意味着示例场景启动后会：
-
-1. 初始化表数据
-2. 创建并初始化 `DialogueController`
-3. 从对话节点 `101` 开始播放
-
-## 使用方法
-
-### 直接运行示例
-
-1. 用 Unity 打开项目
-2. 打开 `Assets/Scenes/SampleScene.unity`
-3. 进入 Play 模式
-4. 系统会自动从 `101` 节点开始显示对话
-
-### 接入到你自己的场景
-
-1. 先调用 `TableDataMgr.Init()`
-2. 创建或挂载 `DialogueController`
-3. 调用 `Init()`
-4. 调用 `RenderNode(startID)` 开始对话
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `ID` | `int` | 记录编号，不参与运行时索引 |
+| `Key` | `string` | 本地化 Key，运行时主索引 |
+| `ZhCN` | `string` | 简中内容 |
+| `EnUS` | `string` | 英文内容 |
 
 示例：
 
-```csharp
-using D1;
-using UnityEngine;
+- `char.1.name`
+- `dlg.101.text`
+- `dlg.101.voice`
 
-public class DialogueEntry : MonoBehaviour
-{
-    private void Start()
-    {
-        if (!TableDataMgr.Init())
-        {
-            return;
-        }
+## 运行时链路
 
-        var controller = gameObject.AddComponent<DialogueController>().Init();
-        if (controller != null)
-        {
-            controller.RenderNode(101);
-        }
-    }
-}
+### 1. 表加载
+
+`TableDataMgr.Init()` 会：
+
+- 读取 `tablelist.json`
+- 逐个加载 `.bytes`
+- 调用生成代码里的 `Deserialize()`
+- 调用生成代码里的 `IndexData()`
+- 最后执行 `Normalize()`
+
+基础索引已经交给 `tabtoy` 生成。  
+`Normalize()` 当前额外构建了“对话节点 -> 选项数据列表”的业务缓存。
+
+### 2. 对话逻辑
+
+`Dialogue.cs` 负责：
+
+- `StartDialogue`
+- `NextDialogue`
+- `ChoiceDialogue`
+- `RefreshCurrentDialogue`
+
+### 3. 数据组装
+
+`DialogueRepository.cs` 只查原始表数据。  
+`LocalizationRepository.cs` 只负责按 `Key + 当前语言` 解析值。  
+`DialogueResolver.cs` 负责把：
+
+- `DialogueData`
+- `CharacterData`
+- 本地化文本
+- 本地化语音
+
+组装成最终的 `DialogueResult`。
+
+### 4. UI 与语音
+
+`DialogueUI.cs` 负责：
+
+- 正文显示
+- 角色名显示
+- 头像显示
+- 选项显示
+- 打字机效果
+- 语言下拉框事件
+
+`DialogueVoicePlayer.cs` 负责：
+
+- `AudioClip` 缓存
+- 当前节点语音播放/停止
+
+## 头像资源规则
+
+如果图片文件在：
+
+```text
+Assets/Resources/Art/knight-removebg-preview.png
 ```
 
-## 如何导表
+那么 `Character.xlsx` 的 `ImagePath` 应填写：
 
-编辑 `Config/xlsx` 目录下的 Excel 文件后，执行：
+```text
+Art/knight-removebg-preview
+```
+
+不要填写：
+
+- `Assets/Resources/...`
+- `.png`
+- 绝对路径
+
+并且图片导入类型必须是 `Sprite (2D and UI)`。
+
+## 打字机规则
+
+`DialogueUI.cs` 使用 `TextMeshProUGUI.maxVisibleCharacters` 实现逐字显示。
+
+当前交互：
+
+- 节点进入后正文逐字显示
+- 文本没打完时点击背景，会直接补完整句
+- 文本打完后，无选项节点才允许点击进入下一句
+- 有选项节点会等正文打完再显示选项
+
+速度参数在 `DialogueUI.charactersPerSecond`。
+
+## 导表
+
+修改 `Config/Table/xlsx` 后执行：
 
 ```bat
-Config\xlsx\Make.bat
+Config\Table\xlsx\Make.bat
 ```
 
-这个脚本会自动完成以下工作：
+它会生成：
 
-- 生成 `Assets/Scripts/Generated/table_gen.cs`
-- 导出 JSON 到 `Assets/Resources/LoadableAssets/Table`
-- 重建 `tablelist.json`
+- `Assets/Scripts/Core/Table/Generated/table_gen.cs`
+- `Assets/Resources/LoadableAssets/Table/*.bytes`
+- `Assets/Resources/LoadableAssets/Table/tablelist.json`
 
-## 当前实现说明
+建议在终端里执行，便于直接看错误：
 
-基于当前代码，这个项目已经实现了对话主流程，但还有一些地方是保留扩展位：
+```bat
+cd /d D:\unitycode2\Dialogue
+Config\Table\xlsx\Make.bat
+```
 
-- `DialogueData.Name` 已经存在，但当前 UI 里还没有显示说话人名字
-- 当节点既没有 `NextID` 也没有选项时，系统会自动隐藏对话 UI，作为结束处理
-- UI 预制体路径目前写死为 `Resources/Perfab/DialogueUI`
+## 示例入口
 
-## 适合继续扩展的方向
+当前示例入口在 `Assets/Scripts/Main.cs`，启动时会：
 
-- 增加角色名显示
-- 增加立绘和背景切换
-- 增加对话历史记录
-- 增加节点事件回调
-- 增加变量条件判断与分支控制
-- 增加本地化支持
-- 把 `Resources` 加载方式替换成 Addressables
+- 初始化表
+- 设置默认语言
+- 初始化 `DialogueController`
+- 从节点 `101` 开始展示
 
-## 主要脚本说明
+## 当前方向
 
-- [Dialogue.cs](/d:/unitycode2/Dialogue/Assets/Scripts/Dialogue/Dialogue.cs)：对话状态与节点跳转
-- [DialogueController.cs](/d:/unitycode2/Dialogue/Assets/Scripts/Dialogue/DialogueController.cs)：初始化、UI 生命周期与节点渲染
-- [DialogueUI.cs](/d:/unitycode2/Dialogue/Assets/Scripts/Dialogue/DialogueUI.cs)：对话面板和选项按钮控制
-- [DialogueRepository.cs](/d:/unitycode2/Dialogue/Assets/Scripts/Dialogue/DialogueRepository.cs)：配置表查询封装
-- [DialogueValidator.cs](/d:/unitycode2/Dialogue/Assets/Scripts/Dialogue/DialogueValidator.cs)：配置合法性校验
-- [TableDataMgr.cs](/d:/unitycode2/Dialogue/Assets/Scripts/TableDataMgr.cs)：表加载与索引构建
+- 通用表系统已从对话模块中拆出
+- 文本和语音统一使用 `LocalizationData`
+- 表加载已切到 `her_simple` 风格的二进制加载模式
+- 基础索引在生成层，业务关系在 `Normalize()`
 
-## License
+## 后续可扩展
 
-谢谢大家。
+- 增加更多语言列
+- 增加自动播放/历史记录
+- 增加角色表情、立绘状态
+- 从 `Resources` 迁移到 `Addressables`
+- 为更多业务模块复用同一套配表系统

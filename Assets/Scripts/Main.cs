@@ -13,6 +13,8 @@ namespace D1
                 return;
             }
 
+            LocalizationSettings.CurrentLanguage = LocalizationLanguage.ZhCN;
+
             var controller = gameObject.AddComponent<DialogueController>().Init();
             if (!controller)
             {

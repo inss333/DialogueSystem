@@ -1,7 +1,6 @@
-﻿{
-    "Tables":  [
-                   "CharacterData.json",
-                   "DialogueData.json",
-                   "SelectData.json"
-               ]
-}
+﻿[
+    "CharacterData.bytes",
+    "DialogueData.bytes",
+    "LocalizationData.bytes",
+    "SelectData.bytes"
+]
