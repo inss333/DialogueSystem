@@ -1,9 +1,18 @@
 # DialogueSystem
 
-基于 Unity 的轻量对话系统示例。当前工程已经把“通用表系统”和“对话模块”拆开：
+一个基于 Unity 的轻量级对话系统示例项目。
 
-- `tabtoy` 导表和二进制表加载属于项目级基础设施
-- `Dialogue` 只是使用这套表系统的一个业务模块
+这个项目使用 `DialogueData` 和 `SelectData` 两张表来描述对话节点、分支选择和跳转关系，运行时通过 `Resources` 加载 JSON 数据，并使用统一的 `DialogueUI` 预制体进行渲染，适合用来快速搭建剧情对话、NPC 对话或简单的分支叙事系统。
+
+## 项目特性
+
+- 基于配置表驱动对话内容
+- 支持顺序对话，使用 `NextID` 串联节点
+- 支持分支选项，使用 `SelectList` 跳转不同节点
+- 支持打字机效果
+- 启动时自动校验表数据引用关系
+- 选项按钮支持按数量动态扩展
+- 自带可运行示例场景
 
 ## 环境
 
@@ -17,12 +26,12 @@
 ```text
 Assets/
   Resources/
-    LoadableAssets/Table/                # 导表产物（.bytes + tablelist.json）
-    Perfab/DialogueUI.prefab             # 对话 UI 预制体
+    LoadableAssets/Table/                
+    Perfab/DialogueUI.prefab             
   Scripts/
     Core/
       Localization/
-        LocalizationLanguage.cs          # 支持的语言枚举
+        LocalizationLanguage.cs          
         LocalizationLanguageExtensions.cs # 语言显示名和语言列映射
         LocalizationRepository.cs        # 本地化查询入口，按 Key + 当前语言返回文本或语音路径
         LocalizationSettings.cs          # 当前语言设置
@@ -46,10 +55,10 @@ Assets/
 
 Config/
   Table/
-    xlsx/                                # 通用配表目录
+    xlsx/                                
       *.xlsx
       Make.bat                           # 导表入口脚本
-    tabtoy.exe                           # 预编译 tabtoy，可被 Make.bat 直接调用
+    tabtoy.exe                          
 ```
 
 ## 表设计
@@ -218,17 +227,4 @@ Config\Table\xlsx\Make.bat
 - 初始化 `DialogueController`
 - 从节点 `101` 开始展示
 
-## 当前方向
 
-- 通用表系统已从对话模块中拆出
-- 文本和语音统一使用 `LocalizationData`
-- 表加载已切到 `her_simple` 风格的二进制加载模式
-- 基础索引在生成层，业务关系在 `Normalize()`
-
-## 后续可扩展
-
-- 增加更多语言列
-- 增加自动播放/历史记录
-- 增加角色表情、立绘状态
-- 从 `Resources` 迁移到 `Addressables`
-- 为更多业务模块复用同一套配表系统
